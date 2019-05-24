@@ -1,7 +1,7 @@
 # Updated Anycubic Photon voxel viewer support for .photons
 
 ## Screenshots
-![Screenshot](screenshots/dragon.png)
+![Screenshot](screenshots/updated.PNG)
 
 ## Overview
 
