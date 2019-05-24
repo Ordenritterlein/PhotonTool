@@ -1,4 +1,4 @@
-# Updated Anycubic Photon voxel viewer support for .photons
+# Updated Anycubic Photon voxel viewer with support for .photons
 
 ## Screenshots
 ![Screenshot](screenshots/updated.PNG)
