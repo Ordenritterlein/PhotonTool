@@ -10,6 +10,11 @@ now supports fullscreen, .photons and regular photon files,
 has nicer and more clear shaders than the old version as well as
 (hopefully) better camera controls.
 
+a copy is hosted here: http://photon.chrisgraf.de/
+it still runs all the heavy lifting on you PC, so expect to need a 
+decent graphics card if you look at bigger files, especially one with 
+a good bit of VRam.
+
 ## License
 **Unlicense (http://unlicense.org) **
 
