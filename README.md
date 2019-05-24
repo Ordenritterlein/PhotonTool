@@ -1,7 +1,14 @@
-# Anycubic Photon tool.
+# Updated Anycubic Photon voxel viewer support for .photons
 
 ## Screenshots
 ![Screenshot](screenshots/dragon.png)
+
+## Overview
+
+Updated Voxel viewer based on Rob2048's PhotonTool. 
+now supports fullscreen, .photons and regular photon files,
+has nicer and more clear shaders than the old version as well as
+(hopefully) better camera controls.
 
 ## License
 **Unlicense (http://unlicense.org) **
