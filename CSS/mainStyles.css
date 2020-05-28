@@ -1,0 +1,50 @@
+#attribution {
+  position: absolute;
+  bottom: 0px;
+  left: 0px;
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+}
+
+#attribution p{
+  margin: 12px;
+  bottom: -5px;
+}
+
+#attribution p:first-child{
+  left:12px;
+}
+
+#attribution p:last-child{
+  right: 12px;
+  text-align: right;
+}
+
+#attribution a{
+  text-decoration: none;
+  color: #87a6ff;
+}
+
+#gl-view {
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  z-index: -1;
+  width: 100%;
+  height: 100%;
+}
+
+#thumb-small {
+  position: absolute;
+  right: 20px;
+  top: 20px;
+}
+
+#UI-overlay {
+  color:#ffffff;
+}
+
+body{
+  overflow: hidden;
+}
