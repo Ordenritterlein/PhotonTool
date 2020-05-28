@@ -1,4 +1,7 @@
 function loadFile(fileArrayBuffer, fextension){
+
+  clear3dScene()
+  
   console.log("file is being read, extension is '" + fextension + "'" );
 
   let outfile = null;
@@ -9,7 +12,7 @@ function loadFile(fileArrayBuffer, fextension){
   	//case "photon": case "cbddlp" : outfile = readPhotonFile(d); break;
   	//case "pws" : outfile = readPwsFile(d); break;
     //case "sl1" : outfile = readSl1File(fileArrayBuffer); break;
-    case "cws": outfile = readCwsFile(fileArrayBuffer); break;
+    case "cws": outfile = cws_readFile(fileArrayBuffer); break;
 	}
 }
 
