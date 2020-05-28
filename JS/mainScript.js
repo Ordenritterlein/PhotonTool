@@ -28,7 +28,7 @@ voxelMaterial = new THREE.ShaderMaterial( {
 //-------------------------------------------------------------------------------------------
 // Voxels.
 //-------------------------------------------------------------------------------------------
-function pushVoxel(x, y, sides, height = 0.05) { //add quads to array, sides is 6 bits indicating if a voxel's side is visible
+function pushVoxel(x, y, sides, height) { //add quads to array, sides is 6 bits indicating if a voxel's side is visible
   x *= bedScaleX;
   y *= bedScaleY;
   if (sides & 1) {

@@ -1,7 +1,7 @@
 let cws_Layer0Data = null;
 let cws_Layer1Data = null;
 let cws_Layer2Data = null;
-let cws_LayerAttributes = null;
+let cws_LayerAttributes = [];
 let cws_FileAttributes = null;
 let cws_currentZHeight = 0;
 
@@ -9,7 +9,7 @@ function cws_readFile(fileArrayBuffer){
   cws_Layer0Data = null;
   cws_Layer1Data = null;
   cws_Layer2Data = null;
-  cws_LayerAttributes = null;
+  cws_LayerAttributes = [];
   cws_FileAttributes = null;
   cws_currentZHeight = 0;
   JSZip.loadAsync(fileArrayBuffer)
@@ -107,14 +107,14 @@ function cws_generateLayerMeshVoxels(layerIndex) {
           if (zP == 0) voxel |= 32;
 
           if (voxel != 0) {
-            pushVoxel(iX, iY, voxel);
+            pushVoxel(iX, iY, voxel, cws_LayerAttributes[layerIndex].layerHeight);
           }
         }
       }
     }
 
     layerMeshes.push(createMeshFromQuads(cws_currentZHeight));
-    cws_currentZHeight += 0.05;
+    cws_currentZHeight += cws_LayerAttributes[layerIndex].layerHeight;
 
     t0 = performance.now() - t0;
     console.log('Created layer: ' + t0.toFixed(3) + ' ms');
@@ -139,7 +139,39 @@ function cws_findAttributes(gCode){
     fileBedSizeZ : cws_findValueInGCode(gCodeAttributesSection, "machineZ", "Platform Z Size"),
     fileNumLayers : cws_findValueInGCode(gCodeAttributesSection, "Number of Slices")
   }
+
+  gCodeLayersSection = gCode;
+
+  layerLoop:
+  for(i = 0; i < cws_FileAttributes.fileNumLayers; i++){
+    gCodeLayerIndex = cws_findGCodeIndexOf(gCodeLayersSection, "<Slice> " + i);
+    gCodeLayersSection = gCodeLayersSection.slice(gCodeLayerIndex);
+    zDist = -1;
+    layerAttributesLoop:
+    for(j = 0; j < 10; j++){
+      arg = gCodeLayersSection[j];
+      if(arg.includes("G1")){
+        value = parseFloat(arg.split(" ")[1].replace("Z", ""));
+        if(zDist == -1) {zDist = value;} else {zDist += value; break layerAttributesLoop; }
+      }
+    }
+    cws_LayerAttributes.push({
+      layerHeight:zDist
+    })
+  }
   return cws_FileAttributes;
+}
+
+function cws_findGCodeIndexOf(gCodeArray, string){
+  out = -1;
+  for(k = 0; k < gCodeArray.length; k++){
+    line = gCodeArray[k];
+    if(line.includes(string)){
+      out = k;
+      break;
+    }
+  }
+  return out;
 }
 
 function cws_findValueInGCode(gCodeArray, name, altName = null){
