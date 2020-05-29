@@ -45,6 +45,10 @@
   color:#ffffff;
 }
 
+#ssaoToggle {
+  margin-top: 12px;
+}
+
 body{
   overflow: hidden;
 }

@@ -27,6 +27,8 @@
 		<input type="file" id="files" name="files[]" accept=".photon,.photons,.cws,.zip" onchange="onFileSelected(event)"/>
 		<output id="list"></output>
 		<input id="layer-slider" type="range" min="0" max="100" value="0" style="width: 500px;">
+		</br>
+		<input type="checkbox" id="ssaoToggle" onchange="onSwitchSSAO()"> use Screen Space Ambient Occlusion (makes the shaper a lot easier to discern at a performance cost) </>
 		<div name="Glossary">
 			<p> Move: RMB </p>
 			<p> Zoom: scroll or MMB + drag </p>
@@ -79,7 +81,7 @@
 		void main() {
 		  float edges = max(abs(pass_uv.x),abs(pass_uv.y));
 		  edges = edges *edges *edges * 0.15 * saturate(1.0-pass_CamDist);
-		  gl_FragColor.rgb = pass_color; // - edges;
+		  gl_FragColor.rgb = pass_color - edges;
 		  gl_FragColor.a = 1.0;
 		}
 	</script>

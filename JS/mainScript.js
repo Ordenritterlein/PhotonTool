@@ -16,6 +16,12 @@ let renderer = null;
 let camera = null;
 let composer = null;
 
+let useSSAO = false;
+
+function onSwitchSSAO(){
+    useSSAO = document.getElementById( 'ssaoToggle' ).checked;
+    console.log("turned SSAO to: " + useSSAO);
+}
 //-------------------------------------------------------------------------------------------
 // Material setup
 //-------------------------------------------------------------------------------------------
@@ -175,9 +181,9 @@ function initSlider(fileNumLayers){
 function create3dScene() {
   scene = new THREE.Scene();
   scene.background = new THREE.Color( 0x646464 );
-  camera = new THREE.PerspectiveCamera( 75, 1280 / 720, 0.01, 100 );
+  camera = new THREE.PerspectiveCamera( 75, 1280 / 720, 0.01, 100);
   let controls = new THREE.OrbitControls(camera, document.getElementById('gl-view'));
-  renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer = new THREE.WebGLRenderer({ antialias: false });
   renderer.setSize(1280, 720);
   document.getElementById('gl-view').appendChild( renderer.domElement );
   renderer.domElement.style.height = "100%";
@@ -201,7 +207,6 @@ function create3dScene() {
   scene.add( cameraOrbitTarget );
 
   let gridHelper = new THREE.GridHelper(120 * sceneScale, 24 );
-  console.log(gridHelper.position);
   scene.add(gridHelper);
 
   camera.position.set( 0, 3, 3);
@@ -212,42 +217,46 @@ function create3dScene() {
   resizeCanvasToDisplaySize(renderer, camera);
 
   composer = new POSTPROCESSING.EffectComposer(renderer);
-  const baseRenderPass = new POSTPROCESSING.RenderPass(scene, camera);
-  composer.addPass(new POSTPROCESSING.RenderPass(scene, camera));
-
-  //////////////////////////////
-
+  ssaoComposer = new POSTPROCESSING.EffectComposer(renderer);
+  const ssaoBaseRenderPass = new POSTPROCESSING.RenderPass(scene, camera);
+  ssaoComposer.addPass(ssaoBaseRenderPass);
   const normalPass = new POSTPROCESSING.NormalPass(scene, camera);
-
-	// Note: Thresholds and falloff correspond to camera near/far.
-	// Example: worldDistance = distanceThreshold * (camera.far - camera.near)
 	const ssaoEffect = new POSTPROCESSING.SSAOEffect(camera, normalPass.renderTarget.texture, {
-		blendFunction: POSTPROCESSING.BlendFunction.MULTIPLY,
+		blendFunction: POSTPROCESSING.BlendFunction.NORMAL,
 		samples: 6,
 		rings: 4,
-		distanceThreshold: 0.995,	// Render up to a distance of ~20 world units
-		distanceFalloff: 0.2,	// with an additional ~2.5 units of falloff.
-		rangeThreshold: 0.995,		// Occlusion proximity of ~0.3 world units
-		rangeFalloff: 0.2,			// with ~0.1 units of falloff.
+		distanceThreshold: 0.995,
+		distanceFalloff: 0.2,
+		rangeThreshold: 0.995,
+		rangeFalloff: 0.2,
 		luminanceInfluence: 0.7,
 		radius: 30,
 		scale: 0.5,
 		bias: 0.05
 	});
+  const effectPass = new POSTPROCESSING.EffectPass(camera, ssaoEffect);
+	ssaoComposer.addPass(normalPass);
+	ssaoComposer.addPass(effectPass);
+  const copyPass = new POSTPROCESSING.SavePass();
+  ssaoComposer.addPass(copyPass);
 
-	const effectPass = new POSTPROCESSING.EffectPass(camera, ssaoEffect);
-  effectPass.renderToScreen = true;
-  //effectPass.dithering = true;
+  const baseRenderPass = new POSTPROCESSING.RenderPass(scene, camera);
+  composer.addPass(baseRenderPass);
+  const blendEffect = new POSTPROCESSING.TextureEffect({
+    texture: copyPass.renderTarget.texture,
+    blendFunction: POSTPROCESSING.BlendFunction.MULTIPLY
+  });
+  const blendPass = new POSTPROCESSING.EffectPass(camera, blendEffect);
+  blendPass.renderToScreen = true;
+  composer.addPass(blendPass);
 
-	composer.addPass(normalPass);
-	composer.addPass(effectPass);
-
-  /////////////////////////////////////////
-
-  // Update the 3d view at the browser framerate.
   function animate() {
-    //renderer.render( scene, camera );
-    composer.render();
+    if(useSSAO){
+      ssaoComposer.render();
+      composer.render();
+    }else{
+      renderer.render(scene, camera);
+    }
     requestAnimationFrame( animate );
   }
   animate();
