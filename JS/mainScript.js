@@ -14,10 +14,12 @@ let scene = null;
 let cameraOrbitTarget = null; // global orbit target mesh
 let renderer = null;
 let camera = null;
+let composer = null;
 
 //-------------------------------------------------------------------------------------------
 // Material setup
 //-------------------------------------------------------------------------------------------
+
 voxelMaterial = new THREE.ShaderMaterial( {
   uniforms: {	},
   vertexShader: document.getElementById( 'vert_BaseShader' ).textContent,
@@ -209,10 +211,44 @@ function create3dScene() {
 
   resizeCanvasToDisplaySize(renderer, camera);
 
+  composer = new POSTPROCESSING.EffectComposer(renderer);
+  const baseRenderPass = new POSTPROCESSING.RenderPass(scene, camera);
+  composer.addPass(new POSTPROCESSING.RenderPass(scene, camera));
+
+  //////////////////////////////
+
+  const normalPass = new POSTPROCESSING.NormalPass(scene, camera);
+
+	// Note: Thresholds and falloff correspond to camera near/far.
+	// Example: worldDistance = distanceThreshold * (camera.far - camera.near)
+	const ssaoEffect = new POSTPROCESSING.SSAOEffect(camera, normalPass.renderTarget.texture, {
+		blendFunction: POSTPROCESSING.BlendFunction.MULTIPLY,
+		samples: 6,
+		rings: 4,
+		distanceThreshold: 0.995,	// Render up to a distance of ~20 world units
+		distanceFalloff: 0.2,	// with an additional ~2.5 units of falloff.
+		rangeThreshold: 0.995,		// Occlusion proximity of ~0.3 world units
+		rangeFalloff: 0.2,			// with ~0.1 units of falloff.
+		luminanceInfluence: 0.7,
+		radius: 30,
+		scale: 0.5,
+		bias: 0.05
+	});
+
+	const effectPass = new POSTPROCESSING.EffectPass(camera, ssaoEffect);
+  effectPass.renderToScreen = true;
+  //effectPass.dithering = true;
+
+	composer.addPass(normalPass);
+	composer.addPass(effectPass);
+
+  /////////////////////////////////////////
+
   // Update the 3d view at the browser framerate.
   function animate() {
+    //renderer.render( scene, camera );
+    composer.render();
     requestAnimationFrame( animate );
-    renderer.render( scene, camera );
   }
   animate();
 }

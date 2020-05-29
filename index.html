@@ -4,7 +4,8 @@
 <head>
 	<meta charset="utf-8">
 	<title>Photon Voxel Viewer</title>
-	<script src="libs/three.js"></script>
+	<script src="libs/three.min.js"></script>
+	<script src="libs/postprocessing.min.js"></script>
 	<script src="libs/OrbitControls.js"></script>
 	<script src="libs/jszip.js"></script>
 	<script src="libs/Pako.js"></script>
@@ -78,7 +79,7 @@
 		void main() {
 		  float edges = max(abs(pass_uv.x),abs(pass_uv.y));
 		  edges = edges *edges *edges * 0.15 * saturate(1.0-pass_CamDist);
-		  gl_FragColor.rgb = pass_color - edges;
+		  gl_FragColor.rgb = pass_color; // - edges;
 		  gl_FragColor.a = 1.0;
 		}
 	</script>
