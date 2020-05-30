@@ -1,7 +1,9 @@
+modelFloorOffset = 0.1;
+
 function loadFile(fileArrayBuffer, fextension){
 
   clear3dScene()
-  
+
   console.log("file is being read, extension is '" + fextension + "'" );
 
   let outfile = null;
@@ -26,4 +28,21 @@ function saveByteArray(array, name, ending){
   link.href = URL.createObjectURL( blob );
   link.download =  name + ending;
   link.click();
+}
+
+function regexLastIndexOf(string, regex, startpos) {
+    regex = (regex.global) ? regex : new RegExp(regex.source, "g" + (regex.ignoreCase ? "i" : "") + (regex.multiLine ? "m" : ""));
+    if(typeof (startpos) == "undefined") {
+        startpos = string.length;
+    } else if(startpos < 0) {
+        startpos = 0;
+    }
+    var stringToWorkWith = string.substring(0, startpos + 1);
+    var lastIndexOf = -1;
+    var nextStop = 0;
+    while((result = regex.exec(stringToWorkWith)) != null) {
+        lastIndexOf = result.index;
+        regex.lastIndex = ++nextStop;
+    }
+    return lastIndexOf;
 }

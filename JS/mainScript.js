@@ -151,8 +151,6 @@ function onFileSelected(evt) {
   fextension = fname.slice((fname.lastIndexOf(".") - 1 >>> 0) + 2);
   //isPhotonS = fextension == 'photons';
 
-  console.log('Load file');
-
   if (files.length == 1) {
     let r = new FileReader();
     r.onload = function(event) {

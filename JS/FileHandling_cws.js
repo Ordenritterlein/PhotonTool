@@ -4,6 +4,7 @@ let cws_Layer2Data = null;
 let cws_LayerAttributes = [];
 let cws_FileAttributes = null;
 let cws_currentZHeight = 0;
+let cws_numLayers = 0;
 
 function cws_readFile(fileArrayBuffer){
   cws_Layer0Data = null;
@@ -12,12 +13,14 @@ function cws_readFile(fileArrayBuffer){
   cws_LayerAttributes = [];
   cws_FileAttributes = null;
   cws_currentZHeight = 0;
+  cws_numLayers = 0;
   JSZip.loadAsync(fileArrayBuffer)
         .then(function(zip) {
             let gCodeFile = null;
             zip.forEach(function (relativePath, zipEntry) {
               subFileName = zipEntry.name;
               subFileExtension = subFileName.slice((subFileName.lastIndexOf(".") - 1 >>> 0) + 2);
+              if(subFileExtension == "png") cws_numLayers++;
               if(subFileExtension == "gcode"){
                 zip.file(subFileName).async("string").then(function (gcodeData) {
                   gCodeFile = gcodeData.split(/\r?\n/);
@@ -41,14 +44,13 @@ function cws_readFile(fileArrayBuffer){
 
 function cws_constructMesh(attributes, zip){
   currLayerName = "";
-  //for(layerIndex = 0; layerIndex < attributes.fileNumLayers; layerIndex++){
 
   function cws_generateLayer(layerIndex){
     zip.forEach(function (relativePath, zipEntry) {
       subFileName = zipEntry.name;
       subFileExtension = subFileName.slice((subFileName.lastIndexOf(".") - 1 >>> 0) + 2);
       if(subFileExtension == "png"){
-          num = parseInt(subFileName.replace(/\D/g,''));
+          num = cws_getLayerNumFromPngName(subFileName);
           if(num == layerIndex) {
             zip.file(subFileName).async("arraybuffer").then(function (layerArrayBuffer) {
               var pngImport = UPNG.decode(layerArrayBuffer);
@@ -65,7 +67,6 @@ function cws_constructMesh(attributes, zip){
                 cws_Layer2Data = new Uint8Array(new ArrayBuffer(cws_FileAttributes.fileResolutionX *  cws_FileAttributes.fileResolutionY));
                 cws_generateLayerMeshVoxels(cws_FileAttributes.fileNumLayers-1); //generate last layer*/
                 initSlider(cws_FileAttributes.fileNumLayers);
-                console.log(layerMeshes);
               }
             });
           }
@@ -113,7 +114,7 @@ function cws_generateLayerMeshVoxels(layerIndex) {
       }
     }
 
-    layerMeshes.push(createMeshFromQuads(cws_currentZHeight));
+    layerMeshes.push(createMeshFromQuads(cws_LayerAttributes[layerIndex].layerPos + modelFloorOffset));
     cws_currentZHeight += cws_LayerAttributes[layerIndex].layerHeight;
 
     t0 = performance.now() - t0;
@@ -137,28 +138,36 @@ function cws_findAttributes(gCode){
     fileBedSizeX : cws_findValueInGCode(gCodeAttributesSection, "machineX", "Platform X Size"),
     fileBedSizeY : cws_findValueInGCode(gCodeAttributesSection, "machineY", "Platform Y Size"),
     fileBedSizeZ : cws_findValueInGCode(gCodeAttributesSection, "machineZ", "Platform Z Size"),
+    fileLayerThickness : cws_findValueInGCode(gCodeAttributesSection, "Layer Thickness"),
     fileNumLayers : cws_findValueInGCode(gCodeAttributesSection, "Number of Slices")
   }
 
-  gCodeLayersSection = gCode;
+  gCodeLayerIndex = cws_findGCodeIndexOf(gCode, "<Slice> " + 0);
+  gCodeLayersSection = gCode.slice(gCodeLayerIndex);
 
-  layerLoop:
-  for(i = 0; i < cws_FileAttributes.fileNumLayers; i++){
-    gCodeLayerIndex = cws_findGCodeIndexOf(gCodeLayersSection, "<Slice> " + i);
-    gCodeLayersSection = gCodeLayersSection.slice(gCodeLayerIndex);
-    zDist = -1;
-    layerAttributesLoop:
-    for(j = 0; j < 10; j++){
-      arg = gCodeLayersSection[j];
-      if(arg.includes("G1")){
+  platePos = cws_FileAttributes.fileLayerThickness;
+  layerPos = 0;
+  currentLayer = 0;
+
+  for(i = 0; i < gCodeLayersSection.length; i++){
+      arg = gCodeLayersSection[i];
+      if(arg.includes("G1 ")){
         value = parseFloat(arg.split(" ")[1].replace("Z", ""));
-        if(zDist == -1) {zDist = value;} else {zDist += value; break layerAttributesLoop; }
+        if(value > 0) {
+          layerPos = platePos;
+        }
+        platePos += value;
       }
-    }
-    cws_LayerAttributes.push({
-      layerHeight:zDist
-    })
+
+      if(arg.includes("<Slice> " + (currentLayer))){
+        currentLayer++;
+        cws_LayerAttributes.push({
+          layerHeight: platePos - layerPos,
+          layerPos: layerPos
+        })
+      }
   }
+
   return cws_FileAttributes;
 }
 
@@ -185,4 +194,10 @@ function cws_findValueInGCode(gCodeArray, name, altName = null){
     }
   }
   return val;
+}
+
+function cws_getLayerNumFromPngName(name){
+  layerName = name.slice(0,name.lastIndexOf("."));
+  layerNum = layerName.slice(regexLastIndexOf(layerName, /\D/) + 1);
+  return parseInt(layerNum);
 }
