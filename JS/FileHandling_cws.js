@@ -114,7 +114,8 @@ function cws_generateLayerMeshVoxels(layerIndex) {
       }
     }
 
-    layerMeshes.push(createMeshFromQuads(cws_LayerAttributes[layerIndex].layerPos + modelFloorOffset));
+    type = cws_LayerAttributes[layerIndex].error ? "error" : "regular";
+    layerMeshes.push(createMeshFromQuads(cws_LayerAttributes[layerIndex].layerPos + modelFloorOffset, type));
     cws_currentZHeight += cws_LayerAttributes[layerIndex].layerHeight;
 
     t0 = performance.now() - t0;
@@ -157,17 +158,24 @@ function cws_findAttributes(gCode){
           layerPos = platePos;
         }
         platePos += value;
+        if(platePos - layerPos < 0){
+          cws_LayerAttributes[cws_LayerAttributes.length-1].error = true;
+          setPrintHasErrorMessage(true);
+        }
       }
 
       if(arg.includes("<Slice> " + (currentLayer))){
         currentLayer++;
+        layerHeight = platePos - layerPos;
+        if(layerHeight < 0) layerHeight = cws_FileAttributes.fileLayerThickness;
         cws_LayerAttributes.push({
-          layerHeight: platePos - layerPos,
-          layerPos: layerPos
+          layerHeight: layerHeight,
+          layerPos: layerPos,
+          error: false
         })
       }
   }
-
+  console.log(cws_LayerAttributes);
   return cws_FileAttributes;
 }
 
@@ -188,9 +196,13 @@ function cws_findValueInGCode(gCodeArray, name, altName = null){
   for(i = 0; i < gCodeArray.length; i++){
     line = gCodeArray[i];
     if(line.includes(name) || (altName!=null && line.includes(altName))){
-      if(line.includes("=")) val = parseFloat(line.slice(line.lastIndexOf("=")+1));
-      if(line.includes(":")) val = parseFloat(line.slice(line.lastIndexOf(":")+1));
-      break;
+
+      if(line.includes("=")) {
+        val = parseFloat(line.slice(line.lastIndexOf("=")+1));
+      }
+      if(line.includes(":")) {
+        val = parseFloat(line.slice(line.lastIndexOf(":")+1));
+      }
     }
   }
   return val;

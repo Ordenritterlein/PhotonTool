@@ -12,7 +12,7 @@
 	<script src="libs/UPNG.js"></script>
 
 	<script src="JS/FileHandling_General.js"></script>
-	
+
 	<script src="JS/FileHandling_cws.js"></script> <!-- zipped cws files -->
 	<script src="JS/FileHandling_sl1.js"></script> <!-- zipped sl1 files -->
 	<script src="JS/FileHandling_Photon.js"></script> <!-- .photon and .cbddlp files -->
@@ -29,6 +29,7 @@
 		<input id="layer-slider" type="range" min="0" max="100" value="0" style="width: 500px;">
 		</br>
 		<input type="checkbox" id="ssaoToggle" onchange="onSwitchSSAO()"> use Screen Space Ambient Occlusion (makes the shaper a lot easier to discern at a performance cost) </>
+		<div id="LayerNegativeError"> the file has an error on layers marked red and will push part of the print into the screen if printed, possibly damaging it.</div>
 		<div name="Glossary">
 			<p> Move: RMB </p>
 			<p> Zoom: scroll or MMB + drag </p>
@@ -51,6 +52,7 @@
 		varying vec3 pass_color;
 		varying vec2 pass_uv;
 		varying float pass_CamDist;
+		uniform float shade_error;
 		void main() {
 		  vec4 worldPos = modelMatrix * vec4( position, 1.0 );
 
@@ -68,6 +70,8 @@
 		  float b = dot(-cameraForward, norm) * 0.25 + 0.75;
 
 		  pass_color = mix(vec3(0.0,0.0,0.0), vec3(r,g,b), sign(dot(viewDirection, norm)) * 0.5 + 0.5);
+			pass_color = mix(pass_color, vec3(pass_color.r,pass_color.g * 0.4,pass_color.b * 0.4), shade_error);
+
 		  pass_uv = uv;
 		  pass_CamDist = length(viewDirection);
 
@@ -78,6 +82,7 @@
 		varying vec3 pass_color;
 		varying vec2 pass_uv;
 		varying float pass_CamDist;
+		uniform float shade_error;
 		void main() {
 		  float edges = max(abs(pass_uv.x),abs(pass_uv.y));
 		  edges = edges *edges *edges * 0.15 * saturate(1.0-pass_CamDist);

@@ -18,6 +18,8 @@ let composer = null;
 
 let useSSAO = false;
 
+let printHasError = false;
+
 function onSwitchSSAO(){
     useSSAO = document.getElementById( 'ssaoToggle' ).checked;
     console.log("turned SSAO to: " + useSSAO);
@@ -27,7 +29,14 @@ function onSwitchSSAO(){
 //-------------------------------------------------------------------------------------------
 
 voxelMaterial = new THREE.ShaderMaterial( {
-  uniforms: {	},
+  uniforms: {	shade_error: { value: 0.0 } },
+  vertexShader: document.getElementById( 'vert_BaseShader' ).textContent,
+  fragmentShader: document.getElementById( 'frag_BaseShader' ).textContent,
+  side: THREE.DoubleSide
+} );
+
+voxelMaterialError = new THREE.ShaderMaterial( {
+  uniforms: {	shade_error: { value: 1.0 } },
   vertexShader: document.getElementById( 'vert_BaseShader' ).textContent,
   fragmentShader: document.getElementById( 'frag_BaseShader' ).textContent,
   side: THREE.DoubleSide
@@ -86,7 +95,7 @@ function clearQuads() { //empty the "quads"-array
   quads = [];
 }
 
-function createMeshFromQuads(yPos) { //create mesh from the "quads"-array
+function createMeshFromQuads(yPos, type = "regular") { //create mesh from the "quads"-array // "regular" "AA" "error"
   let sliceGeo = new THREE.BufferGeometry();
   var vertices = new Float32Array(quads);
 
@@ -122,7 +131,9 @@ function createMeshFromQuads(yPos) { //create mesh from the "quads"-array
   sliceGeo.setIndex(indexBuffer);
   sliceGeo.computeVertexNormals();
   let mat = voxelMaterial;
-
+  if(type == "error"){
+    mat = voxelMaterialError;
+  }
   //position and scale mesh correctly
   sliceMesh = new THREE.Mesh( sliceGeo, mat );
   sliceMesh.position.x = bedSizeX * 0.5 * sceneScale;
@@ -274,6 +285,18 @@ function clear3dScene() {
   }
 
   layerMeshes = [];
+
+  setPrintHasErrorMessage(false);
+}
+
+function setPrintHasErrorMessage(show){
+  console.log("set printer error message to " + show);
+  printHasError = show;
+  if(show){
+    document.getElementById("LayerNegativeError").style.visibility = 'visible';
+  }else{
+    document.getElementById("LayerNegativeError").style.visibility = 'hidden';
+  }
 }
 
 function resizeCanvasToDisplaySize() {
